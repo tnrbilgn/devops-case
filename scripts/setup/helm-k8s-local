@@ -1,9 +1,34 @@
 #!/bin/bash
-set -euo pipefail
 
-PROJECT_ROOT=$(cd "$(dirname "$0")/../.." && pwd)
+# DB Secrets
+POSTGRES_PASSWORD="custompassword"
+POSTGRES_USER="customuser"
+POSTGRES_DB="customdatabase"
+POSTGRES_SECRET_NAME="postgresql-secret"
 
-source ~/devops-case/scripts/devops.env
+# Kubernetes Secrets
+POSTGRES_SECRET_NAME="postgresql-secret"
+POSTGRES_PASSWORD="custompassword"
+
+# Helm Configuration
+HELM_REPO_NAME="bitnami"
+HELM_REPO_URL="https://charts.bitnami.com/bitnami"
+
+# Helm Releases
+REDIS_RELEASE_NAME="my-redis"
+POSTGRES_RELEASE_NAME="my-postgresql"
+
+# Helm Values Files
+POSTGRES_VALUES_FILE="/tmp/helm-charts/postgre/values.yaml"
+REDIS_VALUES_FILE="/tmp/helm-charts/redis/values.yaml"
+
+# Kubernetes Service Files
+PSQL_SERVICE_FILE="/tmp/kubernetes/postgres/psql-service.yaml"
+REDIS_SERVICE_FILE="/tmp/kubernetes/redis/redis-service.yaml"
+
+# PostgreSQL Backup
+PSQL_BACKUP_CRONJOB_FILE="/tmp/kubernetes/postgres/postgresql-backup-cronjob.yaml"
+PSQL_BACKUP_CONFIG_FILE="/tmp/kubernetes/postgres/psql-backup-configmap.yaml"
 
 add_helm_repo() {
     printf "Adding Helm repository: %s\n" "$HELM_REPO_NAME"

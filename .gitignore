@@ -5,6 +5,7 @@ vm_ip.txt
 *.tfstate.backup
 .terraform.lock.hcl
 devops-test.json
+devops-test.pub
 
 # Provider binaries
 terraform-provider-*

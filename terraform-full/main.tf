@@ -31,7 +31,7 @@ resource "google_compute_instance" "vm_instance" {
   
   
   provisioner "file" {
-    source      = "~/devops-case/scripts/setup/install.sh"   
+    source      = "~/devops-case/scripts/setup/install"   
     destination = "/tmp/install.sh" 
   }
   
@@ -41,13 +41,18 @@ resource "google_compute_instance" "vm_instance" {
   }
   
   provisioner "file" {
-    source      = "~/devops-case/scripts/setup/update-jenkins.sh"   
-    destination = "/tmp/update-jenkins.sh" 
+    source      = "~/devops-case/scripts/setup/helm-k8s-local"   
+    destination = "/tmp/helm-k8s-local.sh" 
   }
   
   provisioner "file" {
-    source      = "~/devops-case/scripts/setup/helm-k8s-local.sh"   
-    destination = "/tmp/helm-k8s-local.sh" 
+    source      = "~/devops-case/kubernetes"   
+    destination = "/tmp/kubernetes" 
+  }
+  
+  provisioner "file" {
+    source      = "~/devops-case/helm-charts"   
+    destination = "/tmp/helm-charts" 
   }
   
   provisioner "remote-exec" {
@@ -65,7 +70,7 @@ resource "google_compute_instance" "vm_instance" {
     }
  
   metadata = {
-  ssh-keys = "tanerbilgin94:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDA8Wdl/sLsTjDIpcAi5sV0PE7FlkEF9v7q4lekOBZSpITG4bied5AACm1YZcNxakKjWUCH/kAtJOE4YNOGAPqfaiapGSjf8f0UXk1vOTshkw5R+N23poeww/tBAcWEH2PeK4DAUQAAq03SNDF2+HwLEDYBDkzSPs3htu5+CnK6g4I7iTqhcbEnc4p0Lm7Vtx0VKZ7YVTo7amPe2Nga7T/+YLvPDsTBE5jqlgzzDaJkrZD7CTC3FhqA+03ZqoHIxFz5v5VJgSFZKsl1B5cN+09STDHNQxBtsW6nKCggowirfDCOTy0ks1sa9GqR0GOR/0+Ixq+a5KAcPds/5ci0dpXhYbRD4EyPstJSwG1C9NRftGrtIbtRFW3KU4UWozEzo1vGYo8zqpDL4GQdrl/+diZz1A3AO3rsHUIJWBC0WlhFVv6Wm84rj6/kX7/cutCbwBJDawXQE+QrzdSSB84SPe3rkoczejYbFgX9A0pG1iTiI+xGH0UAibnpTFOxhV8d9OU= tanerbilgin94"
+  ssh-keys = "tanerbilgin94:${file("./devops-test.pub")}"
   }
 }
 
@@ -101,25 +106,8 @@ resource "null_resource" "kind_cluster" {
   }
 }
 
-resource "null_resource" "update_jenkins" {
-  depends_on = [google_compute_instance.vm_instance]
-  connection {
-    type     = "ssh"
-    user     = var.user_name
-    host     = google_compute_instance.vm_instance.network_interface[0].access_config[0].nat_ip
-    private_key = file("~/.ssh/devops-test")
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "echo 'Running update jenkins script...' > /tmp/update_jenkins.txt",
-      "sh /tmp/update_jenkins.sh >> /tmp/update_jenkins.txt 2>&1"
-    ]
-  }
-}
-
 resource "null_resource" "helm-k8s-local" {
-  depends_on = [google_compute_instance.vm_instance]
+  depends_on = [null_resource.kind_cluster]
   connection {
     type     = "ssh"
     user     = var.user_name

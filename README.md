@@ -4,7 +4,7 @@ Kurulum İçin Aşağıdaki Adımlar sırası ile takip edilmelidir.
 ssh-keygen -t rsa -b 4096 -C "tanerbilgin94" -f ~/.ssh/devops-test
 '''
 
-Yukarıdaki komut ile scriptlerimizde ve terraformumuzda kullanılmak üzere ssh key çifti üretilecektir ve terraform main.tf dosyasına oluşturduğumuz public key verilmelidir.
+Yukarıdaki komut ile scriptlerimizde ve terraformumuzda kullanılmak üzere ssh key çifti üretilecektir ve terraform-full klasörü içine bir kopyası taşınmalıdır.
 
 ### Terraform ile GCP üzerinde kurulum
 

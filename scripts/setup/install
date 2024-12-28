@@ -1,8 +1,14 @@
 #!/bin/bash
 
+KIND_VERSION="v0.20.0"
+TERRAFORM_VERSION="1.6.0"
+KUBE_CONFIG_DIR="$HOME/.kube"
+KUBE_CONFIG_FILE="$KUBE_CONFIG_DIR/config"
 
-source ~/devops-case/scripts/devops.env
-
+# Jenkins Configuration
+USER="tanerbilgin94"
+GROUP="tanerbilgin94"
+CONFIG_PATH="/etc/systemd/system/jenkins.service.d/override.conf"
 
 install_basics() {
     printf "Updating system and installing basic dependencies...\n"
@@ -113,6 +119,7 @@ EOF
 
 main() {
     install_basics
+    install_kind
     install_postgresql
     install_docker
     install_kind
