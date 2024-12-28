@@ -30,22 +30,22 @@ resource "google_compute_instance" "vm_instance" {
   ]
   
   
-  provisioner "install" {
+  provisioner "file" {
     source      = "~/devops-case/scripts/setup/install.sh"   
     destination = "/tmp/install.sh" 
   }
   
-  provisioner "kind-config" {
+  provisioner "file" {
     source      = "./kind-config.yaml"   
     destination = "/tmp/kind-config.yaml" 
   }
   
-  provisioner "update_jenkins" {
+  provisioner "file" {
     source      = "~/devops-case/scripts/setup/update-jenkins.sh"   
     destination = "/tmp/update-jenkins.sh" 
   }
   
-  provisioner "helm-k8s-local" {
+  provisioner "file" {
     source      = "~/devops-case/scripts/setup/helm-k8s-local.sh"   
     destination = "/tmp/helm-k8s-local.sh" 
   }

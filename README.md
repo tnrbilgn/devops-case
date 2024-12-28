@@ -1,14 +1,19 @@
 Kurulum İçin Aşağıdaki Adımlar sırası ile takip edilmelidir.
 
-1-) Kademeli Kurulum
+'''
+ssh-keygen -t rsa -b 4096 -C "tanerbilgin94" -f ~/.ssh/devops-test
+'''
+
+Yukarıdaki komut ile scriptlerimizde ve terraformumuzda kullanılmak üzere ssh key çifti üretilecektir ve terraform main.tf dosyasına oluşturduğumuz public key verilmelidir.
 
 ### Terraform ile GCP üzerinde kurulum
+
+~/devops-case/scripts/setup dizini içerisindeki terraform-install scripti çalıştırılır.
+
 '''
-   ~/devops-case/scripts/setup dizini içerisindeki install-with-terraform.sh scripti çalıştırılır.
+   ./devops-case/scripts/setup/terraform-install
 
-   ./devops-case/scripts/setup/install-with-terraform.sh
-
-   Bu script GCP üzerinde gerekli makinayı ve firewall kurallarını ayaklandıracak git repomuz makinaya kopyalanacak ve ardından makinamıza projemizde kullanmamız gereken uygulamaları ve kind clusterları yükleyecektir.
+   Bu script GCP üzerinde gerekli makinayı ve firewall kurallarını ayaklandıracak scriptleri makinaya kopyalanacak ve ardından makinamıza projemizde kullanmamız gereken uygulamaları ve kind clusterları yükleyecektir.
 
    Makinalara erişim için verilen pub/priv key kullanılabilir veya main.tf dosyası içerisinde hardcodding olarak verilen ssh key alanı değiştirilebilir.
 
@@ -16,57 +21,46 @@ Kurulum İçin Aşağıdaki Adımlar sırası ile takip edilmelidir.
 ### Jenkins Kontrolü ve Arayüz Kurulumu
 Terraform kurulumu sonrası makinaya ssh atılarak aşağıdaki komut ile Jenkins'in durumu kontrol edilir ve terraform'un sonunda verdiği VM external ip ile Jenkins arayüzüne erişim sağlanabilir.
 '''
-	sudo systemctl status jenkins.service
+	http://<<VM_EXTERNAL_IP>>:8080
 '''
-Yukarıdaki kontrol sonrası jenkinse ait initialpassword görülecektir görülmemesi durumunda makinaya bağlanılarak aşağıdaki komut ile şifre edinilebilir.
+'''
+	./devops-case/scripts/setup/jenkins-pw
+'''
+Yukarıdaki script ile jenkinse ait initialpassword görülenebilir ve arayüzden giriş yapıldığında kullanılabilir.
+
+Alternatif olarak VM içerisinde aşağıdaki dizinde'de bulabilirsiniz.
 '''
 	sudo cat /var/lib/jenkins/secrets/initialAdminPassword
 
-Şuanki URL : http://34.60.127.206:8080/
-Şuanki Kullanıcı Adı : admin
-Şifre : f8fb88023e8c4084a7eca730fb665acb
 '''
-Ve Jenkins kurulumları yapılır.
+#Postgres Tablo Oluşturma
+Farklı bir yöntem olması açısıyla VM üzerindeki podumuza bağlanarak PSQL ile gerekli inputlar için tablo oluşturulur ve kullancımıza yetkiler verilir.
 
-# HELM CHART ILE POSTGRESQL VE REDIS KURULUMU
-'''
-	~/devops-case/scripts/setup dizini içerisindeki helm-k8s.sh scripti çalıştırılır. Bu script Postgres ve Redis kurulumlarını tamamlayacaktır.
 '''
 
+	./devops-case/sripts/postgres/psql-create-table-ssh
+
+'''
 ### Jenkins Pipeline Çalıştırma
 '''
-	
-	docker build -t flask-app:latest .
-	kind load docker-image flask-app:latest --name devops-cluster
-
-	sudo kubectl apply -f flask-app.yaml
+	./devops-cluster/jenkins/jenkins-pipeline
+'''
+Scriptimiz jenkins içerisine manuel verilerek test için oluşturulmuş flask uygulamamızın kind clusterimize deployunu yapar.
 
 # TEST SCRIPTLERI
-GCP üzerindeki LoadBalancer kademesinde sorunlar yaşandığı için kurulumlarımı local olarak sağladım. Aşağıdaki scriptler vasıtası ile VM üzerindeki pod/servislerde gerekli kontroller sağlanacaktır.
 
 ##REDIS
 '''
-Vm üzerinden test için;
 
-	~/devops-case/scripts/redis/redis-ping.sh
+	~/devops-case/scripts/redis/redis-ping
 	
-SSH vasıtası ile localinizden test için;
-
-	~/devops-case/scripts/redis/redis-ping-ssh.sh
 '''
 
 ##POSTGRES
 
-Postgres üzerinde veri işlemek ve cache tutmak için basit bir yapı oluşturuldu bu sebeple gerekli tabloyu ve oluşturduğumuz kullanıcıya yetkileri vermek için aşağıdaki scriptler kullanılmalı, aynı zamanda bu scriptler pod'daki psql'in testinide sağlayacaktır.
-
 '''
-VM üzerinden test ve create için;
-
 	~/devops-case/scripts/postgres/psql-create-table.sh
 	
-SSH vasıtası ile localinizden test ve create için;
-
-	~/devops-case/scripts/postgres/psql-create-table-ssh.sh
 '''
 
 ## FLASK
@@ -74,5 +68,5 @@ SSH vasıtası ile localinizden test ve create için;
 İstenilen işlemlerin kontrolü için API üzerinden input alan bir flask projesi yazıldı aşağıdaki script ile Postgres & Redis'in healthcheck'i veya Postgres'e input girilebilir.
 '''
 
-	~/devops-case/scripts/flask/flask-app-check-and-put.sh
+	~/devops-case/scripts/flask/flask-app-check-and-put
 '''
