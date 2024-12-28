@@ -1,0 +1,18 @@
+#!/bin/bash
+
+source ~/devops-case/scripts/devops.env
+
+SQL_COMMANDS="
+CREATE TABLE IF NOT EXISTS cache (
+    key VARCHAR(255) PRIMARY KEY,
+    value TEXT NOT NULL
+);
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE cache TO ${POSTGRES_USER};
+"
+
+
+ssh -i "$SSH_KEY" "${SSH_USER}@${SSH_HOST}" bash -c "'
+    kubectl exec -it \$(kubectl get pods -l app.kubernetes.io/name=postgresql -o jsonpath=\"{.items[0].metadata.name}\") -- bash -c \"
+    PGPASSWORD='${POSTGRES_PASSWORD}' psql -U '${POSTGRES_USER}' -d '${POSTGRES_DB}' -c \\\"${SQL_COMMANDS}\\\" \"
+'"
+

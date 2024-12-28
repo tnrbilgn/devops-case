@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgresql-backup-script
+data:
+  backup.sh: |
+    #!/bin/bash
+    TIMESTAMP=$(date +%F)
+    pg_dump -U postgres -h my-postgresql.default.svc.cluster.local postgres > /backup/postgresql-backup-$TIMESTAMP.sql
+
+

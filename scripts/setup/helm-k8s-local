@@ -1,0 +1,56 @@
+#!/bin/bash
+set -euo pipefail
+
+PROJECT_ROOT=$(cd "$(dirname "$0")/../.." && pwd)
+
+source ~/devops-case/scripts/devops.env
+
+add_helm_repo() {
+    printf "Adding Helm repository: %s\n" "$HELM_REPO_NAME"
+    helm repo add "$HELM_REPO_NAME" "$HELM_REPO_URL"
+}
+
+update_helm_repo() {
+    printf "Updating Helm repositories\n"
+    helm repo update
+}
+
+create_k8s_secret() {
+    local secret_name="$1"
+    local password="$2"
+    printf "Creating Kubernetes secret: %s\n" "$secret_name"
+    kubectl create secret generic "$secret_name" \
+        --from-literal=postgres-password="$password" \
+        --from-literal=password="$password" --dry-run=client -o yaml | kubectl apply -f -
+}
+
+install_helm_chart() {
+    local release_name="$1"
+    local chart_name="$2"
+    local values_file="$3"
+    printf "Installing Helm chart: %s\n" "$release_name"
+    helm install "$release_name" "$chart_name" -f "$values_file"
+}
+
+apply_k8s_manifest() {
+    local manifest_file="$1"
+    printf "Applying Kubernetes manifest: %s\n" "$manifest_file"
+    kubectl apply -f "$manifest_file"
+}
+
+main() {
+
+    add_helm_repo
+    update_helm_repo
+
+    create_k8s_secret "$POSTGRES_SECRET_NAME" "$POSTGRES_PASSWORD"
+    install_helm_chart "$POSTGRES_RELEASE_NAME" "$HELM_REPO_NAME/postgresql" "$POSTGRES_VALUES_FILE"
+    apply_k8s_manifest "$PSQL_SERVICE_FILE"
+    create_k8s_secret "$POSTGRES_SECRET_NAME" "$POSTGRES_PASSWORD"
+    install_helm_chart "$REDIS_RELEASE_NAME" "$HELM_REPO_NAME/redis" "$REDIS_VALUES_FILE"
+    apply_k8s_manifest "$REDIS_SERVICE_FILE"
+    apply_k8s_manifest "$PSQL_BACKUP_CRONJOB_FILE"
+    apply_k8s_manifest "$PSQL_BACKUP_CONFIG_FILE"
+}
+
+main

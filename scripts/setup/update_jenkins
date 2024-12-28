@@ -1,0 +1,28 @@
+#!/bin/bash
+
+source ~/devops-case/scripts/devops.env
+
+
+sudo mkdir -p $(dirname "$CONFIG_PATH")
+cat <<EOF | sudo tee "$CONFIG_PATH"
+[Service]
+User=$USER
+Group=$GROUP
+EOF
+
+echo "override.conf file has been created and updated."
+
+
+sudo chown -R $USER:$GROUP /var/lib/jenkins
+sudo chown -R $USER:$GROUP /var/log/jenkins
+sudo chown -R $USER:$GROUP /var/cache/jenkins
+
+echo "Ownership of Jenkins directories has been changed to $USER:$GROUP."
+
+
+sudo systemctl daemon-reload
+echo "Systemd services have been reloaded."
+
+sudo systemctl restart jenkins
+echo "Jenkins service has been restarted."
+

@@ -1,0 +1,7 @@
+#!/bin/bash
+
+
+source ~/devops-case/scripts/devops.env
+
+
+ssh -i "$SSH_KEY" "${SSH_USER}@${SSH_HOST}" "sudo cat ${TARGET_FILE}"

@@ -1,0 +1,21 @@
+#!/bin/bash
+
+source ~/devops-case/scripts/devops.env
+
+HEALTH_CHECK_COMMAND="curl http://$SSH_HOST:30000/health"
+DATA_PROCESS_COMMAND="curl -X POST http://$SSH_HOST:30000/set -H \"Content-Type: application/json\" -d '{\"key\": \"example_key\", \"value\": \"example_value\"}'"
+
+
+echo "1) Health Check"
+echo "2) Insert Data"
+read -rp "Choose an option (1 or 2): " choice
+
+if [[ "$choice" == "1" ]]; then
+    ssh -i "$SSH_KEY" "${SSH_USER}@${SSH_HOST}" "$HEALTH_CHECK_COMMAND"
+elif [[ "$choice" == "2" ]]; then
+    ssh -i "$SSH_KEY" "${SSH_USER}@${SSH_HOST}" "$DATA_PROCESS_COMMAND"
+else
+    echo "Invalid choice."
+    exit 1
+fi
+

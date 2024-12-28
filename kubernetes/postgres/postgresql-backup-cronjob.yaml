@@ -1,0 +1,32 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: postgresql-backup
+spec:
+  schedule: "0 0 * * *"  # Her gün gece yarısı
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: pg-backup
+            image: postgres:15  # PostgreSQL versiyonuna uygun bir imaj seçin
+            env:
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: postgres-password
+            command:
+            - /bin/bash
+            - -c
+            - |
+              pg_dump -h my-postgresql -U postgres -F c -b -v -f /backups/postgres-backup-$(date +\%Y-\%m-\%d).dump
+            volumeMounts:
+            - mountPath: /backups
+              name: backup-storage
+          restartPolicy: OnFailure
+          volumes:
+          - name: backup-storage
+            persistentVolumeClaim:
+              claimName: backup-pvc

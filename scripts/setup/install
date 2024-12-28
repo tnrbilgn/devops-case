@@ -1,0 +1,133 @@
+#!/bin/bash
+
+
+source ~/devops-case/scripts/devops.env
+
+
+install_basics() {
+    printf "Updating system and installing basic dependencies...\n"
+    sudo apt update && sudo apt upgrade -y
+    sudo apt install -y curl wget git unzip jq
+}
+
+
+install_postgresql() {
+    printf "Installing PostgreSQL...\n"
+    sudo apt install -y postgresql
+}
+
+
+install_docker() {
+    printf "Installing Docker...\n"
+    sudo apt install -y docker.io
+    sudo systemctl start docker
+    sudo systemctl enable docker
+    sudo usermod -aG docker "$USER"
+}
+
+
+install_kind() {
+    printf "Installing Kind...\n"
+    local kind_binary="./kind"
+    curl -Lo "$kind_binary" "https://kind.sigs.k8s.io/dl/${KIND_VERSION}/kind-linux-amd64"
+    chmod +x "$kind_binary"
+    sudo mv "$kind_binary" /usr/local/bin/kind
+}
+
+
+install_helm() {
+    printf "Installing Helm...\n"
+    curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+}
+
+
+install_terraform() {
+    printf "Installing Terraform...\n"
+    local terraform_zip="terraform_${TERRAFORM_VERSION}_linux_amd64.zip"
+    wget "https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/${terraform_zip}"
+    unzip "$terraform_zip"
+    sudo mv terraform /usr/local/bin/
+    rm "$terraform_zip"
+}
+
+
+install_jenkins() {
+    printf "Installing Jenkins...\n"
+    sudo apt install -y openjdk-17-jdk
+    curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key | sudo tee \
+        /usr/share/keyrings/jenkins-keyring.asc > /dev/null
+    echo deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] \
+        https://pkg.jenkins.io/debian-stable binary/ | sudo tee \
+        /etc/apt/sources.list.d/jenkins.list > /dev/null
+    sudo apt update
+    sudo apt install -y jenkins
+    sudo systemctl start jenkins
+    sudo systemctl enable jenkins
+}
+
+
+install_kubectl() {
+    printf "Installing Kubectl...\n"
+    local kubectl_binary="./kubectl"
+    curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl"
+    chmod +x "$kubectl_binary"
+    sudo mv "$kubectl_binary" /usr/local/bin/kubectl
+}
+
+
+install_redis_cli() {
+    printf "Installing Redis CLI...\n"
+    sudo apt install -y redis-tools
+}
+
+
+configure_kubernetes() {
+    printf "Configuring Kubernetes...\n"
+    mkdir -p "$KUBE_CONFIG_DIR"
+    sudo kind get kubeconfig --name="devops-cluster" > "$KUBE_CONFIG_FILE"
+    chmod 600 "$KUBE_CONFIG_FILE"
+}
+
+configure_jenkins() {
+    sudo mkdir -p "$(dirname "$CONFIG_PATH")"
+    cat <<EOF | sudo tee "$CONFIG_PATH" > /dev/null
+[Service]
+User=$USER
+Group=$GROUP
+EOF
+    printf "override.conf file has been created and updated.\n"
+
+
+    sudo chown -R "$USER:$GROUP" /var/lib/jenkins
+    sudo chown -R "$USER:$GROUP" /var/log/jenkins
+    sudo chown -R "$USER:$GROUP" /var/cache/jenkins
+    printf "Ownership of Jenkins directories has been changed to %s:%s.\n" "$USER" "$GROUP"
+
+
+    sudo systemctl daemon-reload
+    printf "Systemd services have been reloaded.\n"
+
+    sudo systemctl restart jenkins
+    printf "Jenkins service has been restarted.\n"
+}
+
+main() {
+    install_basics
+    install_postgresql
+    install_docker
+    install_kind
+    install_helm
+    install_terraform
+    install_jenkins
+    install_kubectl
+    install_redis_cli
+    configure_kubernetes
+    configure_jenkins
+
+    mkdir ~/devops-case
+    printf "Installation complete. Please close and reopen the terminal.\n"
+}
+
+# Execute main function
+main
+

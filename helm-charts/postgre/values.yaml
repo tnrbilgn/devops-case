@@ -1,0 +1,15 @@
+auth:
+  existingSecret: postgresql-secret
+  username: customuser
+  database: customdatabase
+primary:
+  name: primary
+  pgHbaConfiguration: |-
+    local all all trust
+    host all all all trust
+    host all all all md5
+  persistence:
+    size: 10Gi
+  extraFlags:
+    - --ssl=off
+

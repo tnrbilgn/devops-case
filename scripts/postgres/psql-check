@@ -1,0 +1,5 @@
+#!/bin/bash
+
+SSH_HOST=$(cat terraform-full/vm_ip.txt)
+
+psql -h $SSH_HOST -p 31000 -U customuser -d customdatabase

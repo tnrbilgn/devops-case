@@ -1,0 +1,66 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_IMAGE = 'flask-app:latest'
+        KIND_CLUSTER = 'devops-cluster'
+        KUBE_MANIFEST = '/home/tanerbilgin94/devops-case/kubernetes/flask-app.yaml'
+        REPO_DIR= '/home/tanerbilgin94/devops-case'
+    }
+
+    stages {
+        stage('Clone or Update Git Repository') {
+        steps {
+            echo 'Checking and updating Git Repository...'
+            sh '''
+            if [ -d "$REPO_DIR/.git" ]; then
+                echo "Repository already exists. Pulling latest changes..."
+                cd $REPO_DIR
+                git reset --hard
+                git pull origin master
+            else
+                echo "Repository does not exist. Cloning..."
+                git clone https://github.com/tnrbilgn/devops-case.git $REPO_DIR
+            fi
+            '''
+        }
+    }
+
+        stage('Build Docker Image') {
+            steps {
+                echo 'Building Docker Image...'
+                sh '''
+                docker build -t $DOCKER_IMAGE -f $REPO_DIR/Dockerfile $REPO_DIR
+                '''
+            }
+        }
+
+        stage('Load Image into Kind Cluster') {
+            steps {
+                echo 'Loading Docker Image into Kind Cluster...'
+                sh '''
+                kind load docker-image $DOCKER_IMAGE --name $KIND_CLUSTER
+                '''
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                echo 'Applying Kubernetes Manifest...'
+                sh '''
+                kubectl apply -f $KUBE_MANIFEST
+                '''
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Pipeline completed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed. Please check the logs.'
+        }
+    }
+}
+

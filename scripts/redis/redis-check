@@ -1,0 +1,5 @@
+#!/bin/bash
+
+SSH_HOST=$(cat terraform-full/vm_ip.txt)
+
+redis-cli -h $SSH_HOST -p 32000 ping
